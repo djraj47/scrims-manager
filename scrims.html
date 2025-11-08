@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Element X | Scrims Manager</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --accent1: #ff72b6;
+            --accent2: #00ffe1;
+            --bg-light: #f9f9fb;
+            --text-dark: #333;
+            --card-bg: #fff;
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            font-family: "Poppins", sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 40px 0 10px;
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+        }
+
+        #logoutBtn {
+            background: #ff72b6;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        #logoutBtn:hover {
+            background: #ff5098;
+        }
+
+        .form-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            width: 90%;
+            max-width: 900px;
+            margin: 30px 0;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            background: #f5f5f8;
+            font-size: 14px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        button {
+            grid-column: span 2;
+            padding: 14px;
+            font-size: 15px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .view-toggle {
+            margin-bottom: 25px;
+        }
+
+        .view-toggle button {
+            margin: 0 10px;
+            background: none;
+            border: 2px solid transparent;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .view-toggle button.active {
+            border-color: var(--accent1);
+            color: var(--accent1);
+            background: #ffe8f2;
+        }
+
+        /* CARD VIEW */
+        .scrims-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        .scrim-card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: 0.3s;
+        }
+
+        .scrim-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .scrim-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .scrim-header h2 {
+            font-size: 1.1rem;
+            color: var(--accent1);
+        }
+
+        .scrim-details p {
+            font-size: 14px;
+            margin: 4px 0;
+            color: #444;
+        }
+
+        .match-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .match-images img {
+            width: 100%;
+            height: 70px;
+            border-radius: 10px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .match-images img:hover {
+            transform: scale(1.05);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .btn-small {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-edit {
+            background: #00ffe1;
+            color: #000;
+        }
+
+        .btn-delete {
+            background: #ff72b6;
+            color: #fff;
+        }
+
+        /* TABLE VIEW */
+        table {
+            border-collapse: collapse;
+            width: 95%;
+            max-width: 1200px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        th {
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            color: #fff;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .popup img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 15px;
+            box-shadow: 0 0 25px var(--accent1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🎮 Element X Esports | Scrims Manager</h1>
+    <button id="logoutBtn" onclick="logout()">Logout</button>
+
+    <div class="form-container">
+        <form id="scrimForm">
+            <input type="text" id="maker" placeholder="Scrim Maker" required>
+            <input type="date" id="date" required>
+            <input type="text" id="time" placeholder="Match Time" required>
+            <input type="text" id="lobby" placeholder="Map / Lobby" required>
+            <input type="text" id="prize" placeholder="Prize (optional)">
+            <label>Match 1 <input type="file" id="match1" accept="image/*" required></label>
+            <label>Match 2 <input type="file" id="match2" accept="image/*" required></label>
+            <label>Match 3 <input type="file" id="match3" accept="image/*" required></label>
+            <label>Match 4 <input type="file" id="match4" accept="image/*" required></label>
+            <label>PP Distribution <input type="file" id="ppDistribution" accept="image/*" required></label>
+            <button type="submit">Add Scrim</button>
+        </form>
+    </div>
+
+    <div class="view-toggle">
+        <button id="cardViewBtn" class="active">Card View</button>
+        <button id="tableViewBtn">Table View</button>
+    </div>
+
+    <div class="scrims-container" id="scrimsContainer"></div>
+    <table id="scrimsTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Maker</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Lobby</th>
+                <th>Prize</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div id="popup" class="popup" onclick="closePopup()"><img id="popupImg" src=""></div>
+
+    <script>
+        // 🔒 AUTH PROTECTION
+        if (!localStorage.getItem("loggedIn")) {
+            window.location.href = "login.html";
+        }
+
+        function logout() {
+            localStorage.removeItem("loggedIn");
+            window.location.href = "login.html";
+        }
+
+        // SUPABASE CONFIG
+        const SUPABASE_URL = "https://vrkmnhcimfamintuhnkg.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZya21uaGNpbWZhbWludHVobmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1ODI0MDgsImV4cCI6MjA3ODE1ODQwOH0.wfpi5HmHoEJrwk9FgGhnoPxM5-H1FiJipms3YzDRmdE";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const form = document.getElementById("scrimForm");
+        const container = document.getElementById("scrimsContainer");
+        const tableBody = document.querySelector("#scrimsTable tbody");
+
+        // Upload file to Supabase Storage
+        async function uploadFile(file) {
+            const fileName = `${Date.now()}_${file.name}`;
+            const { data, error } = await supabase.storage.from("scrims").upload(fileName, file);
+            if (error) return "";
+            const { data: urlData } = supabase.storage.from("scrims").getPublicUrl(fileName);
+            return urlData.publicUrl;
+        }
+
+        // Load scrims from Supabase (fixed)
+        async function loadScrims() {
+            const { data, error } = await supabase.from("scrims").select("*");
+            if (error) {
+                console.error("Error loading scrims:", error);
+                return;
+            }
+
+            container.innerHTML = "";
+            tableBody.innerHTML = "";
+            data.forEach(addScrimCard);
+            data.forEach(addScrimRow);
+        }
+
+        // Delete a scrim
+        async function deleteScrim(id) {
+            if (!confirm("Delete this scrim?")) return;
+            await supabase.from("scrims").delete().eq("id", id);
+            loadScrims();
+        }
+
+        // Edit a scrim
+        async function editScrim(id) {
+            const newPrize = prompt("Enter new prize value:");
+            if (newPrize === null) return;
+            await supabase.from("scrims").update({ prize: newPrize }).eq("id", id);
+            loadScrims();
+        }
+
+        // Add new scrim
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const maker = document.getElementById("maker").value;
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+            const lobby = document.getElementById("lobby").value;
+            const prize = document.getElementById("prize").value;
+            const files = [
+                document.getElementById("match1").files[0],
+                document.getElementById("match2").files[0],
+                document.getElementById("match3").files[0],
+                document.getElementById("match4").files[0],
+                document.getElementById("ppDistribution").files[0]
+            ];
+            const urls = [];
+            for (const f of files) urls.push(await uploadFile(f));
+            await supabase.from("scrims").insert([{
+                maker, date, time, lobby, prize,
+                match1: urls[0], match2: urls[1], match3: urls[2], match4: urls[3],
+                pp_distribution: urls[4]
+            }]);
+            form.reset();
+            loadScrims();
+        });
+
+        // Card view builder
+        function addScrimCard(d) {
+            const card = document.createElement("div");
+            card.className = "scrim-card";
+            card.innerHTML = `
+    <div class="scrim-header">
+      <h2>${d.maker}</h2><span>${d.date}</span>
+    </div>
+    <div class="scrim-details">
+      <p><b>Time:</b> ${d.time}</p>
+      <p><b>Lobby:</b> ${d.lobby}</p>
+      <p><b>Prize:</b> ${d.prize || "-"}</p>
+    </div>
+    <div class="match-images">
+      <img src="${d.match1}" onclick="openPopup('${d.match1}')">
+      <img src="${d.match2}" onclick="openPopup('${d.match2}')">
+      <img src="${d.match3}" onclick="openPopup('${d.match3}')">
+      <img src="${d.match4}" onclick="openPopup('${d.match4}')">
+      <img src="${d.pp_distribution}" onclick="openPopup('${d.pp_distribution}')">
+    </div>
+    <div class="actions">
+      <button class="btn-small btn-edit" onclick="editScrim(${d.id})">Edit</button>
+      <button class="btn-small btn-delete" onclick="deleteScrim(${d.id})">Delete</button>
+    </div>`;
+            container.appendChild(card);
+        }
+
+        // Table view builder
+        function addScrimRow(d) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+    <td>${d.id}</td><td>${d.maker}</td><td>${d.date}</td><td>${d.time}</td><td>${d.lobby}</td><td>${d.prize || "-"}</td>
+    <td>
+      <button class="btn-small btn-edit" onclick="editScrim(${d.id})">Edit</button>
+      <button class="btn-small btn-delete" onclick="deleteScrim(${d.id})">Delete</button>
+    </td>`;
+            tableBody.appendChild(row);
+        }
+
+        // Popup view
+        function openPopup(src) { document.getElementById("popupImg").src = src; document.getElementById("popup").style.display = "flex"; }
+        function closePopup() { document.getElementById("popup").style.display = "none"; }
+
+        // View toggle
+        document.getElementById("cardViewBtn").onclick = () => { container.style.display = "grid"; document.getElementById("scrimsTable").style.display = "none"; cardViewBtn.classList.add("active"); tableViewBtn.classList.remove("active"); };
+        document.getElementById("tableViewBtn").onclick = () => { container.style.display = "none"; document.getElementById("scrimsTable").style.display = "table"; tableViewBtn.classList.add("active"); cardViewBtn.classList.remove("active"); };
+
+        loadScrims();
+    </script>
+</body>
+
+</html>
